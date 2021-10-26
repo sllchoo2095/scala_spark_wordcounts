@@ -26,7 +26,7 @@ object Tasks {
       System.err.println("Usage: HdfsWordCount <directory>")
       System.exit(3)
       
-    }else if (args(2).contentEquals("1")){
+    }else if (args(2).contentEquals("1")==true){
       
       //StreamingExamples.setStreamingLogLevels()
     val sparkConf = new SparkConf().setAppName("HdfsWordCount").setMaster("local")
@@ -37,7 +37,13 @@ object Tasks {
     // stream to count words in new files created
     val lines = ssc.textFileStream(args(0)) //what we are monitoring in the folder
 
+    
+     println("Task 1")
+     
+     
     lines.foreachRDD(rdd => {
+      
+      if(!rdd.isEmpty()){
 
       val words = rdd.flatMap(_.split(" ").filter(x => x.matches("[A-Za-z]+")))
 
@@ -50,6 +56,8 @@ object Tasks {
       val dateTime = datetimeFormat.format(now).toString()
 
       wordCounts.saveAsTextFile(args(1) + dateTime)
+      
+      }
 
     })
 
@@ -59,7 +67,10 @@ object Tasks {
     ssc.start()
     ssc.awaitTermination()
       
-    }else if (args(2).contentEquals("2")){
+    }else if (args(2).contentEquals("2")==true){
+      
+      
+      ///=================================== TASK2 
       
     val sparkConf = new SparkConf().setAppName("HdfsWordCount").setMaster("local")
     // Create the context
@@ -68,13 +79,14 @@ object Tasks {
     
     val lines = ssc.textFileStream(args(0)) //what we are monitoring in the folder
     
-    lines.foreachRDD((rdd,Time) => {
+    lines.foreachRDD{(rdd) => 
 
      if(!rdd.isEmpty()){
-       
+      
        val cMatrix = new ArrayBuffer[(String, Int)]()
        
        //ref  https://stackoverflow.com/questions/4539878/strange-string-split-n-behavior/46288888
+       // ref https://github.com/ChenLangChen/Compute-Co-occurrence-Matrix-Saprk-Streaming/blob/master/s3754699_BDP_A2_S2_2020/s3754699_BDP_A2T2_S2_2020/lab9/src/main/scala/streaming/lab9/NetworkWordCount.scala
        
        val lines_array= rdd.map(x=>x.split("[\\r\\n]+")).collect()
        
@@ -84,15 +96,11 @@ object Tasks {
            
            val tokenWords = line_array.flatMap(_.split(" ").filter(x => x.length() >4 & x.matches("[A-Za-z]+")))
            
-           //val alphaWords = tokenWords.map(x=> ("[A-Za-z]+"))
-           
-        
-           
-          // val longWords= alphaWords.filter(x => x.length() >4)
+         
            
            for( i <-0 to  tokenWords.length-1){
              
-             for(j<-tokenWords.length-1 to 0){
+             for(j<- 0 to tokenWords.length-1){
                
                if(i !=j || tokenWords(i).contentEquals(tokenWords(j))==false){
                  cMatrix +=((tokenWords(i) + "_"+ tokenWords(j), 1))
@@ -100,27 +108,28 @@ object Tasks {
                
              }//j
            }//i
-               
-           val rddMatrix = ssc.sparkContext.parallelize(cMatrix)
-           val finalMatrix = rddMatrix.reduceByKey(_ + _)
+ 
+      
+     
+     
            
-               val now = Calendar.getInstance().getTime()//get current time 
-
+       }// for each linesarray 
+   
+       val rddMatrix = ssc.sparkContext.parallelize(cMatrix)
+          val finalMatrix = rddMatrix.reduceByKey(_ + _)
+  val now = Calendar.getInstance().getTime()
       val datetimeFormat = new SimpleDateFormat("dd-MM-yyy_HH-mm-ss")
 
       val dateTime = datetimeFormat.format(now).toString()
       
+     
       finalMatrix.saveAsTextFile(args(1) + dateTime)
-           
-       }
        
-       
-     }
+     }//if RDD IS NOT  EMPTY 
 
-   
-      
 
-    })
+
+    }//LINES FOR EACH RDD. 
     
     
       println("Input file == " + args(0))
@@ -130,9 +139,32 @@ object Tasks {
     ssc.awaitTermination()
     
       
+    }else if (args(1).contentEquals("3")==true){
+      
+    val sparkConf = new SparkConf().setAppName("HdfsWordCount").setMaster("local")
+    // Create the context
+    val ssc = new StreamingContext(sparkConf, Seconds(2))//Checks the file every 2 seconds for new files in the file
+ 
+    val input = ssc.textFileStream(args(0))
+    
+    val lines= input.flatMap(x=>x.split("[\\r\\n]+"))
+    
+    words.
+    
+  
+    //val wordCounts = words.map(x => (x, 1)).reduceByKey(_ + _)//counting 
+    wordCounts.print()
+    
+   
+    ssc.start()
+    ssc.awaitTermination()
+      
+      
+       
     }else{
-       println("ELSE STATEMENT")
-    }
+      println("ELSE STATEMENT")
+      
+    }//else
     
  
 
