@@ -147,9 +147,10 @@ object Tasks {
  
     val input = ssc.textFileStream(args(0))
     
-    val lines= input.flatMap(x=>x.split("[\\r\\n]+"))
+    val lines= input.flatMap(x=>x.split("[\\r\\n]+") map )
     
-    words.
+    lines.splits
+    //words.
     
   
     //val wordCounts = words.map(x => (x, 1)).reduceByKey(_ + _)//counting 
