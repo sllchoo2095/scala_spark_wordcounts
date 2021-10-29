@@ -21,6 +21,12 @@ import scala.collection.mutable.ArrayBuffer
 object Tasks {
 
   def main(args: Array[String]) {
+    
+    def updateFunction(newValues: Seq[(Int)], runningCount: Option[Int]): Option[Int] = {
+     val newCount = runningCount.getOrElse(0) +newValues.sum
+     
+    Some(newCount)
+}
 
     if (args.length < 3) {
       System.err.println("Usage: HdfsWordCount <directory>")
@@ -28,17 +34,12 @@ object Tasks {
       
     }else if (args(2).contentEquals("1")==true){
       
-      //StreamingExamples.setStreamingLogLevels()
+      
     val sparkConf = new SparkConf().setAppName("HdfsWordCount").setMaster("local")
-    // Create the context
+   
     val ssc = new StreamingContext(sparkConf, Seconds(10)) //Checks the file every 2 seconds for new files in the file
 
-    // Create the FileInputDStream on the directory and use the
-    // stream to count words in new files created
     val lines = ssc.textFileStream(args(0)) //what we are monitoring in the folder
-
-    
-     println("Task 1")
      
      
     lines.foreachRDD(rdd => {
@@ -47,7 +48,7 @@ object Tasks {
 
       val words = rdd.flatMap(_.split(" ").filter(x => x.matches("[A-Za-z]+")))
 
-      val wordCounts = words.map(x => (x, 1)).reduceByKey(_ + _)
+      val wordCounts = words.map(x => (x, 1)).reduceByKey(_ + _)  //(pig, 2) 
 
       val now = Calendar.getInstance().getTime()//get current time 
 
@@ -109,10 +110,7 @@ object Tasks {
              }//j
            }//i
  
-      
-     
-     
-           
+
        }// for each linesarray 
    
        val rddMatrix = ssc.sparkContext.parallelize(cMatrix)
@@ -139,23 +137,31 @@ object Tasks {
     ssc.awaitTermination()
     
       
-    }else if (args(1).contentEquals("3")==true){
+    }else if (args(2).contentEquals("3")==true){
       
+      
+      //ref https://stackoverflow.com/questions/41196826/scala-spark-rdd-combination-in-a-file-to-match-pairs
+      
+      // https://stackoverflow.com/questions/50696420/scala-count-word-co-occurrence-performance-is-really-low
+  
     val sparkConf = new SparkConf().setAppName("HdfsWordCount").setMaster("local")
     // Create the context
-    val ssc = new StreamingContext(sparkConf, Seconds(2))//Checks the file every 2 seconds for new files in the file
+    val ssc = new StreamingContext(sparkConf, Seconds(20))//Checks the file every 2 seconds for new files in the file
  
-    val input = ssc.textFileStream(args(0))
+    val lines = ssc.textFileStream(args(0))
     
-    val lines= input.flatMap(x=>x.split("[\\r\\n]+") map )
+    ssc.checkpoint(".")
     
-    lines.splits
-    //words.
-    
-  
-    //val wordCounts = words.map(x => (x, 1)).reduceByKey(_ + _)//counting 
-    wordCounts.print()
-    
+    val words = lines.map(_.split(" ").filter(x => x.matches("[A-Za-z]+")& x.length()>4).zipWithIndex.combinations(2).toList).flatMap(_.groupBy(word=> (word(0)._1, word(1)._1)).mapValues(_.size))
+   val runningCounts = words.updateStateByKey(updateFunction)
+ 
+    val now = Calendar.getInstance().getTime()//get current time 
+
+    val datetimeFormat = new SimpleDateFormat("dd-MM-yyy_HH-mm-ss")
+
+    val dateTime = datetimeFormat.format(now).toString()
+    runningCounts.saveAsTextFiles(args(1) + dateTime) 
+
    
     ssc.start()
     ssc.awaitTermination()

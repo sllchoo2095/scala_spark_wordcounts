@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <testsuite 
-errors="0" failures="0" hostname="Stephanies-MBP" name="org.scalatest.junit.JUnitWrapperSuite" tests="0" time="0.048" timestamp="2021-10-26T16:58:42">
+errors="0" failures="0" hostname="Stephanies-MBP" name="org.scalatest.junit.JUnitWrapperSuite" tests="0" time="0.057" timestamp="2021-10-29T09:50:26">
   <properties>
     <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
     <property name="java.vm.version" value="14.0.1+7"/>
